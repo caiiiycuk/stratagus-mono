@@ -11,17 +11,22 @@ my @srcgroups = qw(
   ui unit 
   video);
 
+  #wargus);
+
 sub generate {
   my ($stratagus, $projectName, $projectFolder)  = @_;
 
   my $src = "$stratagus/src";
-  my $groups = findSources("$stratagus/CMakeLists.txt");
+  my $stratagusGroups = findSources("$stratagus");
+  my $projectGroups = findSources("$projectFolder");
+  my %merged = (%$projectGroups, %$stratagusGroups);
+  my $groups = \%merged;
+
   my $sources = "";
 
   foreach my $group (@srcgroups) {
     die "Source $group not found!" unless exists $groups->{$group};
-    grep { $_ = $stratagus . "/" . $_ } @{$groups->{$group}};
-    # $groups->{$group}->[0] .= "  # ($group)";
+    #grep { $_ = $stratagus . "/" . $_ } @{$groups->{$group}};
     $sources .= " \\\n" . join(" \\\n", @{$groups->{$group}});
   }
 
@@ -31,7 +36,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
  -I$src/include \\
  -I$src/guichan/include \\
- -I$src/guichan/include/guichan
+ -I$src/guichan/include/guichan \\
+ -I$stratagus/gameheaders
 
 ${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS) \\
  -ltolua++5.1
@@ -48,7 +54,8 @@ MAKEFILE_AM
 }
 
 sub findSources {
-  my $cmake = shift;
+  my $folder = shift;
+  my $cmake = "$folder/CMakeLists.txt";
   my $sourceMap = {};
   open F, "<encoding(:utf-8)", $cmake or die $1;
   while (<F>) {
@@ -59,7 +66,7 @@ sub findSources {
         chomp;
         s/^\s+//g;
         last if (m/^\)$/);
-        push $sourceMap->{$group}, $_ unless m/^#/;
+        push $sourceMap->{$group}, $folder."/".$_ unless m/^#/;
       }
     }
   }
