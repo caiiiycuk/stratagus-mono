@@ -25,8 +25,6 @@ sub generate {
     $sources .= " \\\n" . join(" \\\n", @{$groups->{$group}});
   }
 
-  $sources .= "\n";
-
   my $makefile = <<"MAKEFILE_AM";
 AUTOMAKE_OPTIONS = subdir-objects
 
@@ -35,10 +33,12 @@ AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
  -I$src/guichan/include \\
  -I$src/guichan/include/guichan
 
-${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS)
+${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS) \\
+ -ltolua++5.1
 
 bin_PROGRAMS = $projectName
-${projectName}_SOURCES = $sources
+${projectName}_SOURCES = $sources \\
+ ./tolua.cpp
 
 MAKEFILE_AM
 

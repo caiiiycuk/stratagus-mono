@@ -48,6 +48,9 @@ print `rm -rf $build/*`;
 print "Generating stratagus version file\n";
 print `$stratagus/tools/genversion ./version-generated.h "$stratagusVersion"` or die;
 
+print "Generating tolua.cpp\n";
+print `cd $stratagus/src/tolua && tolua++5.1 -L stratagus.lua -o $build/tolua.cpp stratagus.pkg` or die;
+
 AutomakeGenerator::generate($stratagus, $projectName, $projectFolder);
 
 print <<"SHELL";
