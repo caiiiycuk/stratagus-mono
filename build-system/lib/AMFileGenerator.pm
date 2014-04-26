@@ -14,8 +14,9 @@ my @srcgroups = qw(
   #wargus);
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder, $libpng)  = @_;
+  my ($stratagus, $projectName, $projectFolder, $libpng, $lua)  = @_;
 
+  my $lua = $lua . "/src";
   my $src = "$stratagus/src";
   my $stratagusGroups = findSources("$stratagus");
   my $projectGroups = findSources("$projectFolder");
@@ -38,13 +39,15 @@ AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
  -I$src/guichan/include \\
  -I$src/guichan/include/guichan \\
  -I$stratagus/gameheaders \\
- -I$libpng
+ -I$libpng \\
+ -I$lua
 
 ${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS) \\
  -ltolua++5.1
 
 bin_PROGRAMS = $projectName
 ${projectName}_SOURCES = $sources \\
+./tolua.cpp \\
  $libpng/png.c \\
  $libpng/pngmem.c \\
  $libpng/pngerror.c \\
@@ -59,7 +62,36 @@ ${projectName}_SOURCES = $sources \\
  $libpng/pngrtran.c \\
  $libpng/pngwio.c \\
  $libpng/pngwtran.c \\
- ./tolua.cpp
+ $lua/lapi.c \\
+ $lua/lauxlib.c \\
+ $lua/lbaselib.c \\
+ $lua/lcode.c \\
+ $lua/ldblib.c \\
+ $lua/ldebug.c \\
+ $lua/ldo.c \\
+ $lua/ldump.c \\
+ $lua/lfunc.c \\
+ $lua/lgc.c \\
+ $lua/linit.c \\
+ $lua/liolib.c \\
+ $lua/llex.c \\
+ $lua/lmathlib.c \\
+ $lua/lmem.c \\
+ $lua/loadlib.c \\
+ $lua/lobject.c \\
+ $lua/lopcodes.c \\
+ $lua/loslib.c \\
+ $lua/lparser.c \\
+ $lua/lstate.c \\
+ $lua/lstring.c \\
+ $lua/lstrlib.c \\
+ $lua/ltable.c \\
+ $lua/ltablib.c \\
+ $lua/ltm.c \\
+ $lua/lundump.c \\
+ $lua/lvm.c \\
+ $lua/lzio.c \\
+ $lua/print.c
 
 MAKEFILE_AM
 
