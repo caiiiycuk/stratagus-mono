@@ -14,7 +14,7 @@ my @srcgroups = qw(
   #wargus);
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder)  = @_;
+  my ($stratagus, $projectName, $projectFolder, $libpng)  = @_;
 
   my $src = "$stratagus/src";
   my $stratagusGroups = findSources("$stratagus");
@@ -37,13 +37,28 @@ AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
  -I$src/include \\
  -I$src/guichan/include \\
  -I$src/guichan/include/guichan \\
- -I$stratagus/gameheaders
+ -I$stratagus/gameheaders \\
+ -I$libpng
 
 ${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS) \\
  -ltolua++5.1
 
 bin_PROGRAMS = $projectName
 ${projectName}_SOURCES = $sources \\
+ $libpng/png.c \\
+ $libpng/pngmem.c \\
+ $libpng/pngerror.c \\
+ $libpng/pngwrite.c \\
+ $libpng/pngset.c \\
+ $libpng/pngwutil.c \\
+ $libpng/pngtrans.c \\
+ $libpng/pngread.c \\
+ $libpng/pngrutil.c \\
+ $libpng/pngget.c \\
+ $libpng/pngrio.c \\
+ $libpng/pngrtran.c \\
+ $libpng/pngwio.c \\
+ $libpng/pngwtran.c \\
  ./tolua.cpp
 
 MAKEFILE_AM
