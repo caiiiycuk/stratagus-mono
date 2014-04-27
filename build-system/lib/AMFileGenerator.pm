@@ -14,7 +14,7 @@ my @srcgroups = qw(
   #wargus);
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder, $libpng, $lua)  = @_;
+  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua)  = @_;
 
   my $lua = $lua . "/src";
   my $src = "$stratagus/src";
@@ -40,10 +40,12 @@ AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
  -I$src/guichan/include/guichan \\
  -I$stratagus/gameheaders \\
  -I$libpng \\
- -I$lua
+ -I$lua \\
+ -I$tolua/include
 
-${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS) \\
- -ltolua++5.1
+AM_CFLAGS = \$(AM_CXXFLAGS)
+
+${projectName}_LDADD = \$(REQUIRED_LIBS_LIBS)
 
 bin_PROGRAMS = $projectName
 ${projectName}_SOURCES = $sources \\
@@ -91,7 +93,12 @@ ${projectName}_SOURCES = $sources \\
  $lua/lundump.c \\
  $lua/lvm.c \\
  $lua/lzio.c \\
- $lua/print.c
+ $lua/print.c \\
+ $tolua/src/lib/tolua_event.c \\
+ $tolua/src/lib/tolua_is.c \\
+ $tolua/src/lib/tolua_map.c \\
+ $tolua/src/lib/tolua_push.c \\
+ $tolua/src/lib/tolua_to.c
 
 MAKEFILE_AM
 

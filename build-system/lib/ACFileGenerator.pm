@@ -42,8 +42,6 @@ PKG_CHECK_MODULES([REQUIRED_LIBS], [sdl zlib])
 CXXFLAGS="-g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
 CFLAGS="-g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
 
-#TODO: add Tolua++ checks
-
 AC_OUTPUT
 
 CONFIGURE_AC
