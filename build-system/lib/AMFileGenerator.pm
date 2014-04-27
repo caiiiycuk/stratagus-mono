@@ -16,7 +16,8 @@ my @srcgroups = qw(
 sub generate {
   my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib)  = @_;
 
-  my $lua = $lua . "/src";
+  $lua = $lua . "/src";
+  
   my $src = "$stratagus/src";
   my $stratagusGroups = findSources("$stratagus");
   my $projectGroups = findSources("$projectFolder");
