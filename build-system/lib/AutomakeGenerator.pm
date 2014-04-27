@@ -4,7 +4,7 @@ use AMFileGenerator;
 use ACFileGenerator;
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua) = @_;
+  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib) = @_;
 
   `mkdir m4`;
   `echo > NEWS`;
@@ -12,8 +12,8 @@ sub generate {
   `echo > AUTHORS`;
   `echo > ChangeLog`;
 
-  AMFileGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua);
-  ACFileGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua);
+  AMFileGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib);
+  ACFileGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib);
 }
 
 1;

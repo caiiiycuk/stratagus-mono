@@ -14,7 +14,7 @@ my @srcgroups = qw(
   #wargus);
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua)  = @_;
+  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib)  = @_;
 
   my $lua = $lua . "/src";
   my $src = "$stratagus/src";
@@ -41,7 +41,8 @@ AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
  -I$stratagus/gameheaders \\
  -I$libpng \\
  -I$lua \\
- -I$tolua/include
+ -I$tolua/include \\
+ -I$zlib
 
 AM_CFLAGS = \$(AM_CXXFLAGS)
 
@@ -98,7 +99,22 @@ ${projectName}_SOURCES = $sources \\
  $tolua/src/lib/tolua_is.c \\
  $tolua/src/lib/tolua_map.c \\
  $tolua/src/lib/tolua_push.c \\
- $tolua/src/lib/tolua_to.c
+ $tolua/src/lib/tolua_to.c \\
+ $zlib/adler32.c \\
+ $zlib/compress.c \\
+ $zlib/crc32.c \\
+ $zlib/deflate.c \\
+ $zlib/gzclose.c \\
+ $zlib/gzlib.c \\
+ $zlib/gzread.c \\
+ $zlib/gzwrite.c \\
+ $zlib/infback.c \\
+ $zlib/inffast.c \\
+ $zlib/inflate.c \\
+ $zlib/inftrees.c \\
+ $zlib/trees.c \\
+ $zlib/uncompr.c \\
+ $zlib/zutil.c
 
 MAKEFILE_AM
 

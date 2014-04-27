@@ -29,7 +29,8 @@ my $projectName = $ARGV[0];
 my $projectFolder = File::Spec->abs2rel("$root/$ARGV[0]", $build);
 my $libpng = File::Spec->abs2rel("$root/libpng", $build);
 my $lua = File::Spec->abs2rel("$root/lua", $build);
-my $tolua =  File::Spec->abs2rel("$root/tolua++", $build);
+my $tolua = File::Spec->abs2rel("$root/tolua++", $build);
+my $zlib = File::Spec->abs2rel("$root/zlib", $build);
 
 print <<"CONFIG";
 Root folder: $root
@@ -54,7 +55,7 @@ print `$stratagus/tools/genversion ./version-generated.h "$stratagusVersion"` or
 print "Generating tolua.cpp\n";
 print `cd $stratagus/src/tolua && tolua++5.1 -L stratagus.lua -o $build/tolua.cpp stratagus.pkg` or die;
 
-AutomakeGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua);
+AutomakeGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib);
 
 print <<"SHELL";
 
