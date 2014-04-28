@@ -1,0 +1,24 @@
+=== modified file 'src/include/stratagus.h'
+--- src/include/stratagus.h	2013-04-30 14:37:18 +0000
++++ src/include/stratagus.h	2014-04-28 13:52:44 +0000
+@@ -125,6 +125,7 @@
+ ==  Definitions
+ ============================================================================*/
+ 
++#include <stdlib.h>
+ #include <string.h>
+ 
+ #ifndef __UTIL_H__
+
+=== modified file 'src/ui/mouse.cpp'
+--- src/ui/mouse.cpp	2014-03-08 16:12:33 +0000
++++ src/ui/mouse.cpp	2014-04-28 13:56:35 +0000
+@@ -38,6 +38,7 @@
+ 
+ #include <ctype.h>
+ #include <stdexcept>
++#include <complex> 
+ 
+ #include "stratagus.h"
+ 
+
