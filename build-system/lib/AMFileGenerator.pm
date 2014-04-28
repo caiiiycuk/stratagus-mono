@@ -35,8 +35,7 @@ sub generate {
   my $makefile = <<"MAKEFILE_AM";
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CXXFLAGS = \$(REQUIRED_LIBS_CFLAGS) \\
- -I$src/include \\
+AM_CXXFLAGS = -I$src/include \\
  -I$src/guichan/include \\
  -I$src/guichan/include/guichan \\
  -I$stratagus/gameheaders \\

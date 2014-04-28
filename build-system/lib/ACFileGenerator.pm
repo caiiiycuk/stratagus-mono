@@ -37,10 +37,14 @@ AC_CHECK_FUNCS([strcasestr],,)
 AC_CHECK_FUNCS([strnlen],,)
 AC_CHECK_FUNCS([getopt],,)
 
-PKG_CHECK_MODULES([REQUIRED_LIBS], [sdl])
+SDL_VERSION=1.2.0
+AM_PATH_SDL($SDL_VERSION, : , AC_MSG_ERROR([*** SDL version $SDL_VERSION not found!]))
+CFLAGS="$CFLAGS $SDL_CFLAGS"
+CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+LIBS="$LIBS $SDL_LIBS"
 
-CXXFLAGS="-g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
-CFLAGS="-g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
+CXXFLAGS="$CXXFLAGS -g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
+CFLAGS="$CFLAGS -g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
 
 AC_OUTPUT
 
