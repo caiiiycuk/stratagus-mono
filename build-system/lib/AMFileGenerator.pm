@@ -35,7 +35,13 @@ sub generate {
   my $makefile = <<"MAKEFILE_AM";
 AUTOMAKE_OPTIONS = subdir-objects
 
-AM_CXXFLAGS = -I$src/include \\
+if DEBUG
+AM_CXXFLAGS = -g3 -O0
+else
+AM_CXXFLAGS = -O2
+endif
+
+AM_CXXFLAGS += -I$src/include \\
  -I$src/guichan/include \\
  -I$src/guichan/include/guichan \\
  -I$stratagus/gameheaders \\

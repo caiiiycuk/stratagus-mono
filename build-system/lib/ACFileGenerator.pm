@@ -9,6 +9,8 @@ sub generate {
 AC_PREREQ([2.64])
 AM_INIT_AUTOMAKE
 LT_INIT
+${CFLAGS=""}
+${CXXFLAGS=""}
 AC_PROG_CXX([g++ clang++])
 AC_CONFIG_MACRO_DIR([m4])
 AC_LANG([C++])
@@ -43,8 +45,19 @@ CFLAGS="$CFLAGS $SDL_CFLAGS"
 CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
 LIBS="$LIBS $SDL_LIBS"
 
-CXXFLAGS="$CXXFLAGS -g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
-CFLAGS="$CFLAGS -g3 -O0 -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
+AC_ARG_ENABLE(debug,
+AS_HELP_STRING([--enable-debug],
+               [enable debugging, default: no]),
+[case "${enableval}" in
+             yes) debug=true ;;
+             no)  debug=false ;;
+             *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+esac],
+[debug=false])
+AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
+
+CXXFLAGS="$CXXFLAGS -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
+CFLAGS="$CFLAGS -DUSE_LINUX -DUSE_ZLIB -DPIXMAPS=\\\"share/pixmaps\\\" -fsigned-char"
 
 AC_OUTPUT
 
