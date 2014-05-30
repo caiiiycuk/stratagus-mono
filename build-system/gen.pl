@@ -14,11 +14,11 @@ my $build = File::Spec->rel2abs('.');
 
 $root =~ s|(.*)/.*|$1|;
 
-if (-d "$build/build-system" || @ARGV == 0) {
+if (-d "$build/build-system" || @ARGV < 2) {
   print <<"USAGE";
 USAGE:
 \tcd <build-folder>
-\tperl -w ../build-system/gen.pl <project(wargus)>
+\tperl -w ../build-system/gen.pl <project(wargus)> <build-type(android|native)>
 USAGE
 
   exit(1);
@@ -26,6 +26,7 @@ USAGE
 
 my $stratagus = File::Spec->abs2rel("$root/stratagus", $build);
 my $projectName = $ARGV[0];
+my $buildType = $ARGV[1];
 my $projectFolder = File::Spec->abs2rel("$root/$ARGV[0]", $build);
 my $libpng = File::Spec->abs2rel("$root/libpng", $build);
 my $lua = File::Spec->abs2rel("$root/lua", $build);
@@ -39,6 +40,7 @@ Build folder: $build
 stratagus version: $stratagusVersion
 stratagus folder: $stratagus
 $projectName folder: $projectFolder
+build type: $buildType
 --
 Continue? [y]/n
 CONFIG
@@ -51,7 +53,7 @@ print `rm -rf $build/*`;
 
 print "Patching stratagus\n";
 print `cd $stratagus && bzr revert` or die $!;
-print `patch -p0 -d $stratagus < ../pathces/emscripten.patch` or die $!;
+print `patch -p0 -d $stratagus < ../pathces/stratagus.patch` or die $!;
 
 print "Generating stratagus version file\n";
 print `$stratagus/tools/genversion ./version-generated.h "$stratagusVersion"` or die;
@@ -59,7 +61,7 @@ print `$stratagus/tools/genversion ./version-generated.h "$stratagusVersion"` or
 print "Generating tolua.cpp\n";
 print `cd $stratagus/src/tolua && tolua++5.1 -L stratagus.lua -o $build/tolua.cpp stratagus.pkg` or die;
 
-AutomakeGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib);
+AutomakeGenerator::generate($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib, $buildType);
 
 print <<"SHELL";
 

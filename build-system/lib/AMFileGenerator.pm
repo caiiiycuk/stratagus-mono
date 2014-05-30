@@ -9,12 +9,13 @@ my @srcgroups = qw(
   pathfinder sound 
   spell stratagusmain 
   ui unit 
-  video);
+  video
+  android);
 
   #wargus);
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib)  = @_;
+  my ($stratagus, $projectName, $projectFolder, $libpng, $lua, $tolua, $zlib, $buildType)  = @_;
 
   $lua = $lua . "/src";
   
@@ -23,6 +24,10 @@ sub generate {
   my $projectGroups = findSources("$projectFolder");
   my %merged = (%$projectGroups, %$stratagusGroups);
   my $groups = \%merged;
+
+  if ($buildType eq 'android') {
+    $groups->{android} = [ "../android/com_epicport_glue_NativeGlue.cpp" ];
+  }
 
   my $sources = "";
 
@@ -36,7 +41,7 @@ sub generate {
 AUTOMAKE_OPTIONS = subdir-objects
 
 if DEBUG
-AM_CXXFLAGS = -g3 -O0
+AM_CXXFLAGS = -g3 -O0 -DDEBUG
 else
 AM_CXXFLAGS = -O2
 endif
@@ -48,7 +53,9 @@ AM_CXXFLAGS += -I$src/include \\
  -I$libpng \\
  -I$lua \\
  -I$tolua/include \\
- -I$zlib
+ -I$zlib \\
+ -I/usr/lib/jvm/java-7-oracle/include/ \\
+ -I/usr/lib/jvm/java-7-oracle/include/linux
 
 AM_CFLAGS = \$(AM_CXXFLAGS)
 

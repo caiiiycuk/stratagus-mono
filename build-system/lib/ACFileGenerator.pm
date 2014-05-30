@@ -1,7 +1,7 @@
 package ACFileGenerator;
 
 sub generate {
-  my ($stratagus, $projectName, $projectFolder) = @_;
+  my ($stratagus, $projectName, $projectFolder, $buildType) = @_;
 
   my $configure = "AC_INIT([$projectName], [1.0], [caiiiycuk\@gmail.com])";
   

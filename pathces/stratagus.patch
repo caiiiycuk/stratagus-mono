@@ -1,0 +1,84 @@
+=== modified file 'src/game/game.cpp'
+--- src/game/game.cpp	2014-03-16 06:45:36 +0000
++++ src/game/game.cpp	2014-05-30 13:43:31 +0000
+@@ -127,6 +127,8 @@
+ 	file.printf("\n");
+ }
+ 
++int epicport_game_mode = -1;  // GM_UNKNOWN
++
+ void StartMap(const std::string &filename, bool clean)
+ {
+ 	std::string nc, rc;
+@@ -154,7 +156,9 @@
+ 	SetMessage("%s", _("Do it! Do it now!"));
+ 
+ 	//  Play the game.
++	epicport_game_mode = 1;  // GM_IN_GAME
+ 	GameMainLoop();
++	epicport_game_mode = -1; // GM_UNKNOWN
+ 
+ 	//  Clear screen
+ 	Video.ClearScreen();
+
+=== modified file 'src/include/stratagus.h'
+--- src/include/stratagus.h	2013-04-30 14:37:18 +0000
++++ src/include/stratagus.h	2014-05-30 13:27:37 +0000
+@@ -125,6 +125,7 @@
+ ==  Definitions
+ ============================================================================*/
+ 
++#include <stdlib.h>
+ #include <string.h>
+ 
+ #ifndef __UTIL_H__
+
+=== modified file 'src/stratagus/player.cpp'
+--- src/stratagus/player.cpp	2013-11-16 09:13:29 +0000
++++ src/stratagus/player.cpp	2014-05-30 13:55:32 +0000
+@@ -1152,11 +1152,32 @@
+ /**
+ **  Handle AI of all players each game cycle.
+ */
++int epicport_inc_gold = 0;
++int epicport_inc_oil = 0;
++int epicport_inc_wood = 0;
++
+ void PlayersEachCycle()
+ {
+ 	for (int player = 0; player < NumPlayers; ++player) {
+ 		CPlayer &p = Players[player];
+ 
++		if (p.Type == PlayerPerson) {
++			if (epicport_inc_gold > 0) {
++				p.SetResource(GoldCost, epicport_inc_gold, false);
++				epicport_inc_gold = 0;
++			}
++
++			if (epicport_inc_oil > 0) {
++				p.SetResource(OilCost, epicport_inc_oil, false);
++				epicport_inc_oil = 0;
++			}
++
++			if (epicport_inc_wood > 0) {
++				p.SetResource(WoodCost, epicport_inc_wood, false);
++				epicport_inc_wood = 0;
++			}
++		}
++
+ 		if (p.AiEnabled) {
+ 			AiEachCycle(p);
+ 		}
+
+=== modified file 'src/ui/mouse.cpp'
+--- src/ui/mouse.cpp	2014-03-08 16:12:33 +0000
++++ src/ui/mouse.cpp	2014-05-30 13:27:37 +0000
+@@ -38,6 +38,7 @@
+ 
+ #include <ctype.h>
+ #include <stdexcept>
++#include <complex> 
+ 
+ #include "stratagus.h"
+ 
+
