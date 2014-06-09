@@ -1,6 +1,18 @@
+=== modified file 'src/editor/editloop.cpp'
+--- src/editor/editloop.cpp	2014-02-21 17:00:39 +0000
++++ src/editor/editloop.cpp	2014-06-08 15:27:53 +0000
+@@ -1838,6 +1838,7 @@
+ 
+ 	EditorCallbacks.ButtonPressed = EditorCallbackButtonDown;
+ 	EditorCallbacks.ButtonReleased = EditorCallbackButtonUp;
++	EditorCallbacks.ButtonClick = 0;
+ 	EditorCallbacks.MouseMoved = EditorCallbackMouse;
+ 	EditorCallbacks.MouseExit = EditorCallbackExit;
+ 	EditorCallbacks.KeyPressed = EditorCallbackKeyDown;
+
 === modified file 'src/game/game.cpp'
 --- src/game/game.cpp	2014-03-16 06:45:36 +0000
-+++ src/game/game.cpp	2014-05-30 13:43:31 +0000
++++ src/game/game.cpp	2014-06-08 15:27:53 +0000
 @@ -127,6 +127,8 @@
  	file.printf("\n");
  }
@@ -21,9 +33,22 @@
  	//  Clear screen
  	Video.ClearScreen();
 
+=== modified file 'src/include/interface.h'
+--- src/include/interface.h	2014-02-13 17:11:00 +0000
++++ src/include/interface.h	2014-06-08 15:27:53 +0000
+@@ -278,6 +278,8 @@
+ extern void HandleButtonDown(unsigned button);
+ /// Called if any mouse button is released up
+ extern void HandleButtonUp(unsigned button);
++/// Called if any mouse button is clicked
++extern void HandleButtonClick(unsigned button);
+ /// Keep coordinates in window and update cursor position
+ extern void HandleCursorMove(int *x, int *y);
+ /// Called if the mouse is moved
+
 === modified file 'src/include/stratagus.h'
 --- src/include/stratagus.h	2013-04-30 14:37:18 +0000
-+++ src/include/stratagus.h	2014-05-30 13:27:37 +0000
++++ src/include/stratagus.h	2014-06-08 15:27:53 +0000
 @@ -125,6 +125,7 @@
  ==  Definitions
  ============================================================================*/
@@ -33,9 +58,49 @@
  
  #ifndef __UTIL_H__
 
+=== modified file 'src/include/ui.h'
+--- src/include/ui.h	2014-01-06 21:49:57 +0000
++++ src/include/ui.h	2014-06-08 15:27:53 +0000
+@@ -551,6 +551,8 @@
+ extern void UIHandleButtonDown(unsigned button);
+ /// Called if any mouse button is released up
+ extern void UIHandleButtonUp(unsigned button);
++/// Called if any mouse button is clicked
++extern void UIHandleButtonClick(unsigned button);
+ 
+ /// Restrict mouse cursor to viewport
+ extern void RestrictCursorToViewport();
+
+=== modified file 'src/include/video.h'
+--- src/include/video.h	2014-03-09 07:33:09 +0000
++++ src/include/video.h	2014-06-08 15:30:07 +0000
+@@ -212,6 +212,10 @@
+ 	void (*ButtonPressed)(unsigned buttons);
+ 	/// Callback for mouse button release
+ 	void (*ButtonReleased)(unsigned buttons);
++
++	/// Callback for mouse button click
++	void (*ButtonClick)(unsigned buttons)/* = 0*/;
++
+ 	/// Callback for mouse move
+ 	void (*MouseMoved)(const PixelPos &screenPos);
+ 	/// Callback for mouse exit of game window
+
+=== modified file 'src/stratagus/mainloop.cpp'
+--- src/stratagus/mainloop.cpp	2014-01-06 21:49:57 +0000
++++ src/stratagus/mainloop.cpp	2014-06-08 15:27:53 +0000
+@@ -218,6 +218,7 @@
+ {
+ 	GameCallbacks.ButtonPressed = HandleButtonDown;
+ 	GameCallbacks.ButtonReleased = HandleButtonUp;
++	GameCallbacks.ButtonClick = HandleButtonClick;
+ 	GameCallbacks.MouseMoved = HandleMouseMove;
+ 	GameCallbacks.MouseExit = HandleMouseExit;
+ 	GameCallbacks.KeyPressed = HandleKeyDown;
+
 === modified file 'src/stratagus/player.cpp'
 --- src/stratagus/player.cpp	2013-11-16 09:13:29 +0000
-+++ src/stratagus/player.cpp	2014-05-30 13:55:32 +0000
++++ src/stratagus/player.cpp	2014-06-08 15:27:53 +0000
 @@ -1152,11 +1152,32 @@
  /**
  **  Handle AI of all players each game cycle.
@@ -51,17 +116,17 @@
  
 +		if (p.Type == PlayerPerson) {
 +			if (epicport_inc_gold > 0) {
-+				p.SetResource(GoldCost, epicport_inc_gold, false);
++				p.ChangeResource(GoldCost, epicport_inc_gold, false);
 +				epicport_inc_gold = 0;
 +			}
 +
 +			if (epicport_inc_oil > 0) {
-+				p.SetResource(OilCost, epicport_inc_oil, false);
++				p.ChangeResource(OilCost, epicport_inc_oil, false);
 +				epicport_inc_oil = 0;
 +			}
 +
 +			if (epicport_inc_wood > 0) {
-+				p.SetResource(WoodCost, epicport_inc_wood, false);
++				p.ChangeResource(WoodCost, epicport_inc_wood, false);
 +				epicport_inc_wood = 0;
 +			}
 +		}
@@ -70,15 +135,529 @@
  			AiEachCycle(p);
  		}
 
+=== modified file 'src/stratagus/title.cpp'
+--- src/stratagus/title.cpp	2012-08-07 13:34:21 +0000
++++ src/stratagus/title.cpp	2014-06-08 15:27:53 +0000
+@@ -133,6 +133,7 @@
+ 
+ 	callbacks.ButtonPressed = WaitCallbackButtonPressed;
+ 	callbacks.ButtonReleased = WaitCallbackButtonReleased;
++	callbacks.ButtonClick = 0;
+ 	callbacks.MouseMoved = WaitCallbackMouse;
+ 	callbacks.MouseExit = WaitCallbackExit;
+ 	callbacks.KeyPressed = WaitCallbackKeyPressed;
+
+=== modified file 'src/ui/interface.cpp'
+--- src/ui/interface.cpp	2014-02-13 17:11:00 +0000
++++ src/ui/interface.cpp	2014-06-08 17:12:12 +0000
+@@ -1250,6 +1250,17 @@
+ 	UIHandleButtonUp(button);
+ }
+ 
++/**
++**  Called if mouse button clicked.
++**
++**  @param button  Mouse button number (0 left, 1 middle, 2 right)
++*/
++void HandleButtonClick(unsigned button)
++{
++	UIHandleButtonClick(button);
++}
++
++
+ /*----------------------------------------------------------------------------
+ --  Lowlevel input functions
+ ----------------------------------------------------------------------------*/
+@@ -1271,6 +1282,7 @@
+ static unsigned LastMouseButton;  /// last mouse button handled
+ static unsigned StartMouseTicks;  /// Ticks of first click
+ static unsigned LastMouseTicks;   /// Ticks of last mouse event
++static unsigned LastMouseRelease = 0;  /// last mouse button release
+ 
+ /**
+ **  Called if any mouse button is pressed down
+@@ -1336,6 +1348,7 @@
+ 	}
+ 	MouseButtons &= ~(0x01010101 << button);
+ 
++	LastMouseRelease = button | mask;
+ 	callbacks.ButtonReleased(button | mask);
+ }
+ 
+@@ -1351,29 +1364,16 @@
+ 					unsigned ticks, int x, int y)
+ {
+ 	PixelPos mousePos(x, y);
+-	// Don't reset the mouse state unless we really moved
+-#ifdef USE_TOUCHSCREEN
++
+ 	const int buff = 32;
+ 	const PixelDiff diff = LastMousePos - mousePos;
+ 
+ 	if (abs(diff.x) > buff || abs(diff.y) > buff) {
+ 		MouseState = InitialMouseState;
+ 		LastMouseTicks = ticks;
+-		// Reset rectangle select cursor state if we moved by a lot
+-		// - rectangle select should be a drag, not a tap
+-		if (CursorState == CursorStateRectangle
+-			&& (abs(diff.x) > 2 * buff || abs(diff.y) > 2 * buff)) {
+-			CursorState = CursorStatePoint;
+-		}
+ 	}
++
+ 	LastMousePos = mousePos;
+-#else
+-	if (LastMousePos != mousePos) {
+-		MouseState = InitialMouseState;
+-		LastMouseTicks = ticks;
+-		LastMousePos = mousePos;
+-	}
+-#endif
+ 	callbacks.MouseMoved(mousePos);
+ }
+ 
+@@ -1398,6 +1398,13 @@
+ */
+ void InputMouseTimeout(const EventCallback &callbacks, unsigned ticks)
+ {
++	if (LastMouseRelease && ticks > StartMouseTicks + DoubleClickDelay && MouseState == ClickedMouseState) {
++		if (callbacks.ButtonClick) {
++			callbacks.ButtonClick(LastMouseRelease);
++			LastMouseRelease = 0;
++		}
++	}
++
+ 	if (MouseButtons & (1 << LastMouseButton)) {
+ 		if (ticks > StartMouseTicks + DoubleClickDelay) {
+ 			MouseState = InitialMouseState;
+
 === modified file 'src/ui/mouse.cpp'
 --- src/ui/mouse.cpp	2014-03-08 16:12:33 +0000
-+++ src/ui/mouse.cpp	2014-05-30 13:27:37 +0000
-@@ -38,6 +38,7 @@
- 
++++ src/ui/mouse.cpp	2014-06-09 12:00:12 +0000
+@@ -35,9 +35,9 @@
+ /*----------------------------------------------------------------------------
+ --  Includes
+ ----------------------------------------------------------------------------*/
+-
  #include <ctype.h>
  #include <stdexcept>
 +#include <complex> 
  
  #include "stratagus.h"
  
+@@ -83,6 +83,8 @@
+ 
+ enum _cursor_on_ CursorOn = CursorOnUnknown; /// Cursor on field
+ 
++PixelPos MapStartPos;
++
+ /*----------------------------------------------------------------------------
+ --  Functions
+ ----------------------------------------------------------------------------*/
+@@ -874,7 +876,9 @@
+ 	const int speed = (KeyModifiers & ModifierControl) ? UI.MouseScrollSpeedControl : UI.MouseScrollSpeedDefault;
+ 	const PixelDiff diff(pos - CursorStartScreenPos);
+ 
+-	UI.MouseViewport->Set(UI.MouseViewport->MapPos, UI.MouseViewport->Offset + speed * diff);
++	PixelPos CurrentMapPixelPos = UI.MouseViewport->ScreenToMapPixelPos(pos);
++//	UI.MouseViewport->Set(UI.MouseViewport->MapPos, UI.MouseViewport->Offset + speed * diff);
++	UI.MouseViewport->Set(UI.MouseViewport->MapPos, UI.MouseViewport->Offset + (MapStartPos - CurrentMapPixelPos));
+ 	UI.MouseWarpPos = CursorStartScreenPos;
+ }
+ 
+@@ -1571,51 +1575,17 @@
+ static void UIHandleButtonDown_OnMap(unsigned button)
+ {
+ 	Assert(UI.MouseViewport);
+-#ifdef USE_TOUCHSCREEN
+-	// Detect double left click
+-	const bool doubleLeftButton = MouseButtons & (LeftButton << MouseDoubleShift);
+-#endif
++
++	if (CursorBuilding) {
++		return;
++	}
++
+ 	if ((MouseButtons & LeftButton) && UI.SelectedViewport != UI.MouseViewport) {
+ 		UI.SelectedViewport = UI.MouseViewport;
+ 		DebugPrint("selected viewport changed to %ld.\n" _C_
+ 				   static_cast<long int>(UI.SelectedViewport - UI.Viewports));
+ 	}
+ 
+-	// to redraw the cursor immediately (and avoid up to 1 sec delay
+-	if (CursorBuilding) {
+-#ifdef USE_TOUCHSCREEN
+-		// On touch screen is building started with double left click
+-		if (!doubleLeftButton) {
+-			return;
+-		}
+-#endif
+-		// Possible Selected[0] was removed from map
+-		// need to make sure there is a unit to build
+-		if (Selected[0] && (MouseButtons & LeftButton)
+-			&& UI.MouseViewport->IsInsideMapArea(CursorScreenPos)) {// enter select mode
+-			const Vec2i tilePos = UI.MouseViewport->ScreenToTilePos(CursorScreenPos);
+-			bool explored = CanBuildOnArea(*Selected[0], tilePos);
+-
+-			// 0 Test build, don't really build
+-			if (CanBuildUnitType(Selected[0], *CursorBuilding, tilePos, 0) && (explored || ReplayRevealMap)) {
+-				const int flush = !(KeyModifiers & ModifierShift);
+-				PlayGameSound(GameSounds.PlacementSuccess[ThisPlayer->Race].Sound, MaxSampleVolume);
+-				PlayUnitSound(*Selected[0], VoiceBuild);
+-				for (size_t i = 0; i != Selected.size(); ++i) {
+-					SendCommandBuildBuilding(*Selected[i], tilePos, *CursorBuilding, flush);
+-				}
+-				if (!(KeyModifiers & (ModifierAlt | ModifierShift))) {
+-					CancelBuildingMode();
+-				}
+-			} else {
+-				PlayGameSound(GameSounds.PlacementError[ThisPlayer->Race].Sound, MaxSampleVolume);
+-			}
+-		} else {
+-			CancelBuildingMode();
+-		}
+-		return;
+-	}
+-
+ 	if (MouseButtons & UI.PieMenu.MouseButton) { // enter pie menu
+ 		UnitUnderCursor = NULL;
+ 		GameCursor = UI.Point.Cursor;  // Reset
+@@ -1623,11 +1593,7 @@
+ 		if (!Selected.empty() && Selected[0]->Player == ThisPlayer && CursorState == CursorStatePoint) {
+ 			CursorState = CursorStatePieMenu;
+ 		}
+-#ifdef USE_TOUCHSCREEN
+-	} else if (doubleLeftButton) {
+-#else
+-	} else if (MouseButtons & RightButton) {
+-#endif
++	} else if (MouseButtons & (LeftButton << MouseDoubleShift)) {
+ 		if (!GameObserve && !GamePaused && !GameEstablishing && UI.MouseViewport->IsInsideMapArea(CursorScreenPos)) {
+ 			CUnit *unit;
+ 			// FIXME: Rethink the complete chaos of coordinates here
+@@ -1647,13 +1613,14 @@
+ 			const PixelPos mapPixelPos = UI.MouseViewport->ScreenToMapPixelPos(CursorScreenPos);
+ 			DoRightButton(mapPixelPos);
+ 		}
+-	} else if (MouseButtons & LeftButton) { // enter select mode
++	} else if (MouseButtons & RightButton) { // enter select mode
+ 		CursorStartScreenPos = CursorScreenPos;
+ 		CursorStartMapPos = UI.MouseViewport->ScreenToMapPixelPos(CursorScreenPos);
+ 		GameCursor = UI.Cross.Cursor;
+ 		CursorState = CursorStateRectangle;
+-	} else if (MouseButtons & MiddleButton) {// enter move map mode
++	} else if (MouseButtons & LeftButton) {// enter move map mode
+ 		CursorStartScreenPos = CursorScreenPos;
++		MapStartPos = UI.MouseViewport->ScreenToMapPixelPos(CursorScreenPos);
+ 		GameCursor = UI.Scroll.Cursor;
+ 	}
+ }
+@@ -1865,6 +1832,35 @@
+ 		return;
+ 	}
+ 
++	// to redraw the cursor immediately (and avoid up to 1 sec delay
++	if (CursorBuilding && CursorOn == CursorOnMap) {
++		// Possible Selected[0] was removed from map
++		// need to make sure there is a unit to build
++		if (Selected[0] && UI.MouseViewport->IsInsideMapArea(CursorScreenPos)) {// enter select mode
++			const Vec2i tilePos = UI.MouseViewport->ScreenToTilePos(CursorScreenPos);
++			bool explored = CanBuildOnArea(*Selected[0], tilePos);
++
++			// 0 Test build, don't really build
++			if (CanBuildUnitType(Selected[0], *CursorBuilding, tilePos, 0) && (explored || ReplayRevealMap)) {
++				const int flush = !(KeyModifiers & ModifierShift);
++				PlayGameSound(GameSounds.PlacementSuccess[ThisPlayer->Race].Sound, MaxSampleVolume);
++				PlayUnitSound(*Selected[0], VoiceBuild);
++				for (size_t i = 0; i != Selected.size(); ++i) {
++					SendCommandBuildBuilding(*Selected[i], tilePos, *CursorBuilding, flush);
++				}
++				if (!(KeyModifiers & (ModifierAlt | ModifierShift))) {
++					CancelBuildingMode();
++				}
++			} else {
++				PlayGameSound(GameSounds.PlacementError[ThisPlayer->Race].Sound, MaxSampleVolume);
++			}
++		} else {
++			CancelBuildingMode();
++		}
++		return;
++	}
++
++
+ 	//
+ 	//  Pie Menu
+ 	//
+@@ -1942,7 +1938,7 @@
+ 	// add the content of the rectangle to the selectection
+ 	// ALT takes group of unit
+ 	// CTRL takes all units of same type (st*rcr*ft)
+-	if (CursorState == CursorStateRectangle && !(MouseButtons & LeftButton)) { // leave select mode
++	if (CursorState == CursorStateRectangle && !(MouseButtons & RightButton)) { // leave select mode
+ 		int num = 0;
+ 		//
+ 		//  Little threshold
+@@ -1976,59 +1972,6 @@
+ 					num = SelectUnitsInRectangle(pos0, pos1);
+ 				}
+ 			}
+-#ifdef USE_TOUCHSCREEN
+-			// On touch screen select single unit only when long click is detected
+-			// This fix problem with emulating right mouse button as long left click on touch screens
+-		} else if (button == 0x1000001) {
+-#else
+-		} else {
+-#endif
+-			//
+-			// Select single unit
+-			//
+-			// cade: cannot select unit on invisible space
+-			// FIXME: johns: only complete invisibile units
+-			const Vec2i cursorTilePos = UI.MouseViewport->ScreenToTilePos(CursorScreenPos);
+-			CUnit *unit = NULL;
+-			if (ReplayRevealMap || Map.Field(cursorTilePos)->playerInfo.IsTeamVisible(*ThisPlayer)) {
+-				const PixelPos cursorMapPos = UI.MouseViewport->ScreenToMapPixelPos(CursorScreenPos);
+-
+-				unit = UnitOnScreen(cursorMapPos.x, cursorMapPos.y);
+-			}
+-			if (unit) {
+-				// FIXME: Not nice coded, button number hardcoded!
+-				if ((KeyModifiers & ModifierControl)
+-					|| (button & (1 << MouseDoubleShift))) {
+-					if (KeyModifiers & ModifierShift) {
+-						num = ToggleUnitsByType(*unit);
+-					} else {
+-						num = SelectUnitsByType(*unit);
+-					}
+-				} else if ((KeyModifiers & ModifierAlt) && unit->LastGroup) {
+-					if (KeyModifiers & ModifierShift) {
+-						num = AddGroupFromUnitToSelection(*unit);
+-					} else {
+-						num = SelectGroupFromUnit(*unit);
+-					}
+-
+-					// Don't allow to select own and enemy units.
+-					// Don't allow mixing buildings
+-				} else if (KeyModifiers & ModifierShift
+-						   && (unit->Player == ThisPlayer || ThisPlayer->IsTeamed(*unit))
+-						   && !unit->Type->Building
+-						   && (Selected.size() != 1 || !Selected[0]->Type->Building)
+-						   && (Selected.size() != 1 || Selected[0]->Player == ThisPlayer || ThisPlayer->IsTeamed(*Selected[0]))) {
+-					num = ToggleSelectUnit(*unit);
+-					if (!num) {
+-						SelectionChanged();
+-					}
+-				} else {
+-					SelectSingleUnit(*unit);
+-					num = 1;
+-				}
+-			} else {
+-				num = 0;
+-			}
+ 		}
+ 
+ 		if (num) {
+@@ -2074,10 +2017,106 @@
+ 		CursorStartScreenPos.x = 0;
+ 		CursorStartScreenPos.y = 0;
+ 		GameCursor = UI.Point.Cursor;
++		__android_log_print(ANDROID_LOG_INFO, "WARGUS", "CursorState = CursorStatePoint in 5\n");
+ 		CursorState = CursorStatePoint;
+ 	}
+ }
+ 
++void UIHandleButtonClick(unsigned button) {
++	if (button != 1) {
++		return;
++	}
++
++	int num = 0;
++
++	//
++	// Select single unit
++	//
++	// cade: cannot select unit on invisible space
++	// FIXME: johns: only complete invisibile units
++	const Vec2i cursorTilePos = UI.MouseViewport->ScreenToTilePos(CursorScreenPos);
++	CUnit *unit = NULL;
++	if (ReplayRevealMap || Map.Field(cursorTilePos)->playerInfo.IsTeamVisible(*ThisPlayer)) {
++		const PixelPos cursorMapPos = UI.MouseViewport->ScreenToMapPixelPos(CursorScreenPos);
++
++		unit = UnitOnScreen(cursorMapPos.x, cursorMapPos.y);
++	}
++	if (unit) {
++		// FIXME: Not nice coded, button number hardcoded!
++		if ((KeyModifiers & ModifierControl)
++			|| (button & (1 << MouseDoubleShift))) {
++			if (KeyModifiers & ModifierShift) {
++				num = ToggleUnitsByType(*unit);
++			} else {
++				num = SelectUnitsByType(*unit);
++			}
++		} else if ((KeyModifiers & ModifierAlt) && unit->LastGroup) {
++			if (KeyModifiers & ModifierShift) {
++				num = AddGroupFromUnitToSelection(*unit);
++			} else {
++				num = SelectGroupFromUnit(*unit);
++			}
++
++			// Don't allow to select own and enemy units.
++			// Don't allow mixing buildings
++		} else if (KeyModifiers & ModifierShift
++				   && (unit->Player == ThisPlayer || ThisPlayer->IsTeamed(*unit))
++				   && !unit->Type->Building
++				   && (Selected.size() != 1 || !Selected[0]->Type->Building)
++				   && (Selected.size() != 1 || Selected[0]->Player == ThisPlayer || ThisPlayer->IsTeamed(*Selected[0]))) {
++			num = ToggleSelectUnit(*unit);
++			if (!num) {
++				SelectionChanged();
++			}
++		} else {
++			SelectSingleUnit(*unit);
++			num = 1;
++		}
++	} else {
++		num = 0;
++	}
++
++	if (num) {
++		UI.StatusLine.Clear();
++		ClearCosts();
++		CurrentButtonLevel = 0;
++		SelectionChanged();
++
++		//
++		//  Play selecting sound.
++		//    Buildings,
++		//    This player, or neutral unit (goldmine,critter)
++		//    Other clicks.
++		//
++		if (Selected.size() == 1) {
++			if (Selected[0]->CurrentAction() == UnitActionBuilt && Selected[0]->Player->Index == ThisPlayer->Index) {
++				PlayUnitSound(*Selected[0], VoiceBuilding);
++			} else if (Selected[0]->Burning) {
++				// FIXME: use GameSounds.Burning
++				PlayGameSound(SoundForName("burning"), MaxSampleVolume);
++			} else if (Selected[0]->Player == ThisPlayer || ThisPlayer->IsTeamed(*Selected[0])
++					   || Selected[0]->Player->Type == PlayerNeutral) {
++				PlayUnitSound(*Selected[0], VoiceSelected);
++			} else {
++				PlayGameSound(GameSounds.Click.Sound, MaxSampleVolume);
++			}
++			if (Selected[0]->Player == ThisPlayer) {
++				char buf[64];
++				if (Selected[0]->Player->UnitTypesCount[Selected[0]->Type->Slot] > 1) {
++					snprintf(buf, sizeof(buf), _("You have ~<%d~> %ss"),
++							 Selected[0]->Player->UnitTypesCount[Selected[0]->Type->Slot],
++							 Selected[0]->Type->Name.c_str());
++				} else {
++					snprintf(buf, sizeof(buf), _("You have ~<%d~> %s(s)"),
++							 Selected[0]->Player->UnitTypesCount[Selected[0]->Type->Slot],
++							 Selected[0]->Type->Name.c_str());
++				}
++				UI.StatusLine.Set(buf);
++			}
++		}
++	}
++}
++
+ /**
+ **  Get pie menu under the cursor
+ **
+
+=== modified file 'src/ui/widgets.cpp'
+--- src/ui/widgets.cpp	2013-07-25 12:31:34 +0000
++++ src/ui/widgets.cpp	2014-06-08 15:27:53 +0000
+@@ -123,6 +123,7 @@
+ 
+ 	GuichanCallbacks.ButtonPressed = &MenuHandleButtonDown;
+ 	GuichanCallbacks.ButtonReleased = &MenuHandleButtonUp;
++	GuichanCallbacks.ButtonClick = 0;
+ 	GuichanCallbacks.MouseMoved = &MenuHandleMouseMove;
+ 	GuichanCallbacks.MouseExit = &HandleMouseExit;
+ 	GuichanCallbacks.KeyPressed = &MenuHandleKeyDown;
+
+=== modified file 'src/video/sdl.cpp'
+--- src/video/sdl.cpp	2014-01-06 21:49:57 +0000
++++ src/video/sdl.cpp	2014-06-09 12:00:49 +0000
+@@ -811,6 +811,22 @@
+ 	}
+ }
+ 
++bool consumeEvents = false;
++
++void InputMouseMove(const EventCallback &callbacks,	unsigned ticks, int x, int y);
++void InputMouseMoveWithFix(const EventCallback &callbacks, int motionX, int motionY) {
++	InputMouseMove(callbacks, SDL_GetTicks(), motionX, motionY);
++	// FIXME: Same bug fix from X11
++	if ((UI.MouseWarpPos.x != -1 || UI.MouseWarpPos.y != -1)
++		&& (motionX != UI.MouseWarpPos.x || motionY != UI.MouseWarpPos.y)) {
++		int xw = UI.MouseWarpPos.x;
++		int yw = UI.MouseWarpPos.y;
++		UI.MouseWarpPos.x = -1;
++		UI.MouseWarpPos.y = -1;
++		SDL_WarpMouse(xw, yw);
++	}
++}
++
+ /**
+ **  Handle interactive input event.
+ **
+@@ -826,6 +842,7 @@
+ 		event.button.y = (Uint16)floorf(event.button.y * float(Video.Height) / Video.ViewportHeight);
+ 	}
+ #endif
++	if (!consumeEvents)
+ 	switch (event.type) {
+ 		case SDL_MOUSEBUTTONDOWN:
+ 			InputMouseButtonPress(callbacks, SDL_GetTicks(), event.button.button);
+@@ -838,16 +855,7 @@
+ 		// FIXME: check if this is only useful for the cursor
+ 		// FIXME: if this is the case we don't need this.
+ 		case SDL_MOUSEMOTION:
+-			InputMouseMove(callbacks, SDL_GetTicks(), event.motion.x, event.motion.y);
+-			// FIXME: Same bug fix from X11
+-			if ((UI.MouseWarpPos.x != -1 || UI.MouseWarpPos.y != -1)
+-				&& (event.motion.x != UI.MouseWarpPos.x || event.motion.y != UI.MouseWarpPos.y)) {
+-				int xw = UI.MouseWarpPos.x;
+-				int yw = UI.MouseWarpPos.y;
+-				UI.MouseWarpPos.x = -1;
+-				UI.MouseWarpPos.y = -1;
+-				SDL_WarpMouse(xw, yw);
+-			}
++			InputMouseMoveWithFix(callbacks, event.motion.x, event.motion.y);
+ 			break;
+ 
+ 		case SDL_ACTIVEEVENT:
+@@ -893,6 +901,30 @@
+ 			break;
+ 	}
+ 
++	if (event.type >=  SDL_USEREVENT) {
++		Uint8 action = event.type - SDL_USEREVENT;
++		int pointerId = event.user.code;
++		int x = (int) event.user.data1;
++		int y = (int) event.user.data2;
++
++		if (pointerId == 1 && action == 0 /*DOWN*/) {
++			consumeEvents = true;
++			InputMouseButtonRelease(callbacks, SDL_GetTicks(), SDL_BUTTON_LEFT);
++			InputMouseMoveWithFix(callbacks, x, y);
++			InputMouseButtonPress(callbacks, SDL_GetTicks(), SDL_BUTTON_RIGHT);
++		}
++
++		if (consumeEvents && pointerId == 1 && action == 2 /* MOVE */) {
++			InputMouseMoveWithFix(callbacks, x, y);
++		}
++
++		if (pointerId == 1 && action == 1 /*UP*/) {
++			InputMouseMoveWithFix(callbacks, x, y);
++			InputMouseButtonRelease(callbacks, SDL_GetTicks(), SDL_BUTTON_RIGHT);
++			consumeEvents = false;
++		}
++	}
++
+ 	if (&callbacks == GetCallbacks()) {
+ 		handleInput(&event);
+ 	}
 

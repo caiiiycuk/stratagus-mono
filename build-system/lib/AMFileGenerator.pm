@@ -9,8 +9,7 @@ my @srcgroups = qw(
   pathfinder sound 
   spell stratagusmain 
   ui unit 
-  video
-  android);
+  video);
 
   #wargus);
 
@@ -27,6 +26,7 @@ sub generate {
 
   if ($buildType eq 'android') {
     $groups->{android} = [ "../android/com_epicport_glue_NativeGlue.cpp" ];
+    push @srcgroups, 'android';
   }
 
   my $sources = "";

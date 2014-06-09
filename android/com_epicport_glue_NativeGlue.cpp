@@ -24,4 +24,10 @@ JNIEXPORT void JNICALL Java_com_epicport_glue_NativeGlue_buyResource
     if (resource == 3) {
       epicport_inc_wood += inc;
     }
+
+    if (resource == 4) {
+      epicport_inc_gold += inc;
+      epicport_inc_oil += inc;
+      epicport_inc_wood += inc;
+    }
 }
