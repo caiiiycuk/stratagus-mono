@@ -233,7 +233,7 @@
 
 === modified file 'src/ui/mouse.cpp'
 --- src/ui/mouse.cpp	2014-03-08 16:12:33 +0000
-+++ src/ui/mouse.cpp	2014-06-12 06:56:37 +0000
++++ src/ui/mouse.cpp	2014-06-19 13:37:51 +0000
 @@ -35,9 +35,9 @@
  /*----------------------------------------------------------------------------
  --  Includes
@@ -649,9 +649,9 @@
 +void UIHandleButtonClick(unsigned button) {
 +	const PixelDiff diff(CursorScreenPos - CursorStartScreenPos);
 +
-+	bool wasMoved = UI.MouseViewport->MapPos.x != MapStartTilePos.x ||
-+			UI.MouseViewport->MapPos.y != MapStartTilePos.y ||
-+			abs(diff.x) > 2 || abs(diff.y) > 2;
++	bool wasMoved = abs(UI.MouseViewport->MapPos.x - MapStartTilePos.x) > 3 ||
++			abs(UI.MouseViewport->MapPos.y - MapStartTilePos.y) > 3 ||
++			abs(diff.x) > 8 || abs(diff.y) > 8;
 +
 +
 +	if (button != 1 || wasMoved) {
