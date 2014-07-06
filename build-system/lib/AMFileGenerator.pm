@@ -41,9 +41,9 @@ sub generate {
 AUTOMAKE_OPTIONS = subdir-objects
 
 if DEBUG
-AM_CXXFLAGS = -g3 -O0 -DDEBUG
+AM_CXXFLAGS = -g3 -O0 -DDEBUG -DUSE_VORBIS
 else
-AM_CXXFLAGS = -O2
+AM_CXXFLAGS = -O2 -DUSE_VORBIS
 endif
 
 AM_CXXFLAGS += -I$src/include \\
