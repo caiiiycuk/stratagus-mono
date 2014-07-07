@@ -1,6 +1,6 @@
 === modified file 'src/editor/editloop.cpp'
 --- src/editor/editloop.cpp	2014-02-21 17:00:39 +0000
-+++ src/editor/editloop.cpp	2014-06-12 06:17:33 +0000
++++ src/editor/editloop.cpp	2014-07-07 14:34:44 +0000
 @@ -1838,6 +1838,7 @@
  
  	EditorCallbacks.ButtonPressed = EditorCallbackButtonDown;
@@ -12,7 +12,7 @@
 
 === modified file 'src/game/game.cpp'
 --- src/game/game.cpp	2014-03-16 06:45:36 +0000
-+++ src/game/game.cpp	2014-06-12 06:17:33 +0000
++++ src/game/game.cpp	2014-07-07 14:34:44 +0000
 @@ -127,6 +127,8 @@
  	file.printf("\n");
  }
@@ -33,9 +33,92 @@
  	//  Clear screen
  	Video.ClearScreen();
 
+=== modified file 'src/guichan/include/guichan/widgets/textbox.h'
+--- src/guichan/include/guichan/widgets/textbox.h	2010-11-12 07:25:36 +0000
++++ src/guichan/include/guichan/widgets/textbox.h	2014-07-07 14:34:44 +0000
+@@ -8,7 +8,7 @@
+  *
+  * Copyright (c) 2004, 2005 darkbits                        Js_./
+  * Per Larsson a.k.a finalman                          _RqZ{a<^_aa
+- * Olof Naessén a.k.a jansem/yakslem                _asww7!uY`>  )\a//
++ * Olof NaessÃ©n a.k.a jansem/yakslem                _asww7!uY`>  )\a//
+  *                                                 _Qhm`] _f "'c  1!5m
+  * Visit: http://guichan.darkbits.org             )Qk<P ` _: :+' .'  "{[
+  *                                               .)j(] .d_/ '-(  P .   S
+
+=== modified file 'src/guichan/include/guichan/widgets/textfield.h'
+--- src/guichan/include/guichan/widgets/textfield.h	2010-11-12 07:25:36 +0000
++++ src/guichan/include/guichan/widgets/textfield.h	2014-07-07 15:28:57 +0000
+@@ -8,7 +8,7 @@
+  *
+  * Copyright (c) 2004, 2005 darkbits                        Js_./
+  * Per Larsson a.k.a finalman                          _RqZ{a<^_aa
+- * Olof Naessén a.k.a jansem/yakslem                _asww7!uY`>  )\a//
++ * Olof NaessÃ©n a.k.a jansem/yakslem                _asww7!uY`>  )\a//
+  *                                                 _Qhm`] _f "'c  1!5m
+  * Visit: http://guichan.darkbits.org             )Qk<P ` _: :+' .'  "{[
+  *                                               .)j(] .d_/ '-(  P .   S
+
+=== modified file 'src/guichan/widgets/textbox.cpp'
+--- src/guichan/widgets/textbox.cpp	2010-11-12 07:25:36 +0000
++++ src/guichan/widgets/textbox.cpp	2014-07-07 14:34:44 +0000
+@@ -8,7 +8,7 @@
+  *
+  * Copyright (c) 2004, 2005 darkbits                        Js_./
+  * Per Larsson a.k.a finalman                          _RqZ{a<^_aa
+- * Olof Naessén a.k.a jansem/yakslem                _asww7!uY`>  )\a//
++ * Olof NaessÃ©n a.k.a jansem/yakslem                _asww7!uY`>  )\a//
+  *                                                 _Qhm`] _f "'c  1!5m
+  * Visit: http://guichan.darkbits.org             )Qk<P ` _: :+' .'  "{[
+  *                                               .)j(] .d_/ '-(  P .   S
+
+=== modified file 'src/guichan/widgets/textfield.cpp'
+--- src/guichan/widgets/textfield.cpp	2010-11-12 07:25:36 +0000
++++ src/guichan/widgets/textfield.cpp	2014-07-07 15:47:45 +0000
+@@ -8,7 +8,7 @@
+  *
+  * Copyright (c) 2004, 2005 darkbits                        Js_./
+  * Per Larsson a.k.a finalman                          _RqZ{a<^_aa
+- * Olof Naessén a.k.a jansem/yakslem                _asww7!uY`>  )\a//
++ * Olof NaessÃ©n a.k.a jansem/yakslem                _asww7!uY`>  )\a//
+  *                                                 _Qhm`] _f "'c  1!5m
+  * Visit: http://guichan.darkbits.org             )Qk<P ` _: :+' .'  "{[
+  *                                               .)j(] .d_/ '-(  P .   S
+@@ -62,6 +62,10 @@
+ #include "guichan/exception.h"
+ #include "util.h"
+ 
++#ifdef ANDROID
++#include <SDL_screenkeyboard.h>
++#endif
++
+ namespace gcn
+ {
+     TextField::TextField()
+@@ -183,10 +187,19 @@
+     {
+         if (hasMouse() && button == MouseInput::LEFT)
+         {
++#ifdef ANDROID
++            if (SDL_IsScreenKeyboardShown(NULL)) {
++                SDL_HideScreenKeyboard(NULL);
++            } else {
++                setText("");
++                SDL_ANDROID_ToggleScreenKeyboardWithoutTextInput();
++            }
++#else
+             mCaretPosition = getFont()->getStringIndexAt(mText, x + mXScroll);
+ 			mSelectStart = mCaretPosition;
+ 			mSelectEndOffset = 0;
+             fixScroll();
++#endif            
+         }
+         else if (hasMouse() && button == MouseInput::MIDDLE)
+         {
+
 === modified file 'src/include/interface.h'
 --- src/include/interface.h	2014-02-13 17:11:00 +0000
-+++ src/include/interface.h	2014-06-12 06:17:33 +0000
++++ src/include/interface.h	2014-07-07 14:34:44 +0000
 @@ -278,6 +278,8 @@
  extern void HandleButtonDown(unsigned button);
  /// Called if any mouse button is released up
@@ -48,7 +131,7 @@
 
 === modified file 'src/include/stratagus.h'
 --- src/include/stratagus.h	2013-04-30 14:37:18 +0000
-+++ src/include/stratagus.h	2014-06-12 06:17:33 +0000
++++ src/include/stratagus.h	2014-07-07 14:34:44 +0000
 @@ -125,6 +125,7 @@
  ==  Definitions
  ============================================================================*/
@@ -60,7 +143,7 @@
 
 === modified file 'src/include/ui.h'
 --- src/include/ui.h	2014-01-06 21:49:57 +0000
-+++ src/include/ui.h	2014-06-12 06:17:33 +0000
++++ src/include/ui.h	2014-07-07 14:34:44 +0000
 @@ -551,6 +551,8 @@
  extern void UIHandleButtonDown(unsigned button);
  /// Called if any mouse button is released up
@@ -73,7 +156,7 @@
 
 === modified file 'src/include/video.h'
 --- src/include/video.h	2014-03-09 07:33:09 +0000
-+++ src/include/video.h	2014-06-12 06:17:33 +0000
++++ src/include/video.h	2014-07-07 14:34:44 +0000
 @@ -212,6 +212,10 @@
  	void (*ButtonPressed)(unsigned buttons);
  	/// Callback for mouse button release
@@ -88,7 +171,7 @@
 
 === modified file 'src/stratagus/mainloop.cpp'
 --- src/stratagus/mainloop.cpp	2014-01-06 21:49:57 +0000
-+++ src/stratagus/mainloop.cpp	2014-06-12 06:17:33 +0000
++++ src/stratagus/mainloop.cpp	2014-07-07 14:34:44 +0000
 @@ -218,6 +218,7 @@
  {
  	GameCallbacks.ButtonPressed = HandleButtonDown;
@@ -100,7 +183,7 @@
 
 === modified file 'src/stratagus/player.cpp'
 --- src/stratagus/player.cpp	2013-11-16 09:13:29 +0000
-+++ src/stratagus/player.cpp	2014-06-12 06:17:33 +0000
++++ src/stratagus/player.cpp	2014-07-07 14:34:44 +0000
 @@ -1152,11 +1152,32 @@
  /**
  **  Handle AI of all players each game cycle.
@@ -137,7 +220,7 @@
 
 === modified file 'src/stratagus/title.cpp'
 --- src/stratagus/title.cpp	2012-08-07 13:34:21 +0000
-+++ src/stratagus/title.cpp	2014-06-12 06:17:33 +0000
++++ src/stratagus/title.cpp	2014-07-07 14:34:44 +0000
 @@ -133,6 +133,7 @@
  
  	callbacks.ButtonPressed = WaitCallbackButtonPressed;
@@ -149,7 +232,7 @@
 
 === modified file 'src/ui/interface.cpp'
 --- src/ui/interface.cpp	2014-02-13 17:11:00 +0000
-+++ src/ui/interface.cpp	2014-06-12 06:17:33 +0000
++++ src/ui/interface.cpp	2014-07-07 14:34:44 +0000
 @@ -1250,6 +1250,17 @@
  	UIHandleButtonUp(button);
  }
@@ -233,7 +316,7 @@
 
 === modified file 'src/ui/mouse.cpp'
 --- src/ui/mouse.cpp	2014-03-08 16:12:33 +0000
-+++ src/ui/mouse.cpp	2014-06-19 13:37:51 +0000
++++ src/ui/mouse.cpp	2014-07-07 14:34:44 +0000
 @@ -35,9 +35,9 @@
  /*----------------------------------------------------------------------------
  --  Includes
@@ -754,7 +837,7 @@
 
 === modified file 'src/ui/widgets.cpp'
 --- src/ui/widgets.cpp	2013-07-25 12:31:34 +0000
-+++ src/ui/widgets.cpp	2014-06-12 06:17:33 +0000
++++ src/ui/widgets.cpp	2014-07-07 14:34:44 +0000
 @@ -123,6 +123,7 @@
  
  	GuichanCallbacks.ButtonPressed = &MenuHandleButtonDown;
@@ -766,7 +849,7 @@
 
 === modified file 'src/video/sdl.cpp'
 --- src/video/sdl.cpp	2014-01-06 21:49:57 +0000
-+++ src/video/sdl.cpp	2014-06-12 06:17:33 +0000
++++ src/video/sdl.cpp	2014-07-07 14:34:44 +0000
 @@ -811,6 +811,22 @@
  	}
  }
