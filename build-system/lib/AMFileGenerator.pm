@@ -149,7 +149,7 @@ sub findSources {
         chomp;
         s/^\s+//g;
         last if (m/^\)$/);
-        push $sourceMap->{$group}, $folder."/".$_ unless m/^#/;
+        push(@{ $sourceMap->{$group} }, $folder."/".$_) unless m/^#/;
       }
     }
   }
