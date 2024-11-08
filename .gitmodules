@@ -1,0 +1,3 @@
+[submodule "stratagus"]
+	path = stratagus
+	url = git@github.com:caiiiycuk/stratagus.git
