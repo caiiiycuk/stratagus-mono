@@ -51,10 +51,6 @@ if (getc() eq 'n') {
 
 print `rm -rf $build/*`;
 
-print "Patching stratagus\n";
-print `cd $stratagus && bzr revert` or die $!;
-print `patch -p0 -d $stratagus < ../pathces/stratagus.patch` or die $!;
-
 print "Generating stratagus version file\n";
 print `$stratagus/tools/genversion ./version-generated.h "$stratagusVersion"` or die;
 
